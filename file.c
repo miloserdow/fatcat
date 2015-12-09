@@ -5,19 +5,10 @@
 
 #include "structs.h"
 
-int entry_is_dir(entry_t* dir);
-size_t entry_namelen(entry_t* dir);
-size_t entry_extlen(entry_t* dir);
-char* file_path(file_t* dir); 
-file_t* init_file(fat_desc_t* fat, entry_t* entry, dir_t* dir); 
-void free_file(file_t** file_ptr);
-void print_file(file_t* file);
-
 char* file_path(file_t* file) {
     int namelen = entry_namelen(file->entry), 
         extlen = entry_extlen(file->entry),
         plen = strlen(file->dir->pth);
-    
     char* pth = malloc(plen + namelen + extlen + 3);
     assert(pth != NULL);
     
@@ -25,12 +16,12 @@ char* file_path(file_t* file) {
     pth[plen + namelen + extlen + 2] = '\0';
 
     if (plen > 0) 
-        strncpy(pth, file->dir->pth, plen);
-    strncpy(pth + plen + 1, file->entry->fname, namelen);
+        strncpy(pth, (const char *) file->dir->pth, plen);
+    strncpy(pth + plen + 1, (const char *) file->entry->fname, namelen);
     
     if (extlen > 0) {
         pth[plen + namelen + 1] = '.';
-        strncpy(pth + plen + namelen + 2, file->entry->ext, extlen);
+        strncpy(pth + plen + namelen + 2, (const char *) file->entry->ext, extlen);
     }
     return pth;
 }

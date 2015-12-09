@@ -94,4 +94,22 @@ struct file_t {
     char* pth;
 };
 
+// ALL the functions involved...
+dir_t* process_root(fat_desc_t* fat, int root_cluster);
+void dir_process(fat_desc_t *fat, dir_t *parent);
+dir_t* init_dir(fat_desc_t* fat, entry_t* entry, dir_t* parent);
+void add_subdir(dir_t* parent, dir_t* subdir);
+void add_file(dir_t* parent, file_t* file);
+char* dir_pth(dir_t* dir);
+void print_dir(dir_t* dir);
+
+size_t entry_namelen(entry_t* dir);
+size_t entry_extlen(entry_t* dir);
+char* file_path(file_t* dir); 
+file_t* init_file(fat_desc_t* fat, entry_t* entry, dir_t* dir); 
+void print_file(file_t* file);
+
+inline int get_sector(fat_desc_t* fat, int sector);
+inline int get_cluster_size(fat_desc_t* fat, int start_cluster);
+inline int get_next_cluster(fat_desc_t* fat, int cluster);
 #endif // STRUCTS_H

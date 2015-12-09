@@ -4,10 +4,6 @@
 
 #include "structs.h"
 
-int get_sector(fat_desc_t* fat, int cluster);
-int get_next_cluster(fat_desc_t* fat, int cluster);
-int get_cluster_size(fat_desc_t* fat, int start_cluster);
-
 inline int get_sector(fat_desc_t* fat, int sector) {
     int res = fat->disk_start;
     res += fat->sector_size * sector;

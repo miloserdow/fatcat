@@ -1,32 +1,29 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <assert.h>
 #include <string.h>
 
 #include "structs.h"
 
-void dir_process(fat_desc_t *fat, dir_t *parent);
-void add_subdir(dir_t* parent, dir_t* subdir);
-void add_file(dir_t* parent, file_t* file);
-char* dir_pth(dir_t* dir); 
-
 char* dir_pth(dir_t* dir)  {
     char *p = (dir->parent == NULL ? NULL : dir->parent->pth);
     int plen = (p == NULL ? 0 : strlen(p));
     int len = plen + 1 + entry_namelen(dir->entry) + 1;
-    char *pth = malloc(len);
+    char *pth = (char*) malloc(len * sizeof(char));
     assert(pth != NULL);
     if (plen)
         strncpy(pth, p, plen);
     pth[plen] = '/';
-    strncpy(pth + plen + 1, dir->entry->fname, entry_namelen(dir->entry));
+    strncpy(pth + plen + 1, (const char *) dir->entry->fname, entry_namelen(dir->entry));
+    pth[len - 1] = '\0';
     return pth;
 }
 
 void print_dir(dir_t* dir)  {
     printf("directory: %s\n", dir->pth + 6); // skip root label
-    printf("size: %u bytes, ", dir->byte_size, dir->clust_sz);
-    printf("%u clusters\n", dir->cluster);
+    printf("size: %d bytes, ", dir->byte_size);
+    printf("%d clusters\n", dir->clust_sz);
     printf("modify time: %02d-%02d-%02d %02d:%02d:%02d\n\n", dir->entry->days + 1,
         dir->entry->months + 1, dir->entry->years + 1980, dir->entry->hrs,
         dir->entry->mins, dir->entry->secs);
@@ -45,14 +42,14 @@ dir_t* init_dir(fat_desc_t* fat, entry_t* entry, dir_t* parent) {
     dir->parent = parent;
     dir->entry = entry;
     
+    dir->max_files = 100;
+    dir->max_subdirs = 100;
     dir->subdirs = malloc(dir->max_subdirs * sizeof(dir_t*));
     dir->files = malloc(dir->max_files * sizeof(file_t*));
     assert(dir->subdirs != NULL);
     assert(dir->files != NULL);
     dir->file_cnt = 0;
     dir->subdir_cnt = 0;
-    dir->max_files = 100;
-    dir->max_subdirs = 100;
     
     // finally get the path
     dir->clust_sz = get_cluster_size(fat, entry->cluster);
@@ -65,8 +62,8 @@ dir_t* process_root(fat_desc_t* fat, int root_cluster) {
     entry_t* root_entry = malloc(sizeof(entry_t));
     assert(root_entry != NULL);
     memset(root_entry, 0, sizeof(entry_t));
-    memset(root_entry->fname, 0x20, 11);
-    memcpy(root_entry->fname, "ROOT", 4);
+    //memset(root_entry->fname, 0x20, 5);
+    memcpy(root_entry->fname, "ROOT", sizeof(char) * 4);
     root_entry->cluster = root_cluster;
     
     dir_t* dir = init_dir(fat, root_entry, NULL);

@@ -15,7 +15,7 @@ typedef struct {
 } __attribute((packed)) partition_table_t;
 
 fat_desc_t* fat_init(FILE* in, unsigned int offset) {
-    fat_desc_t* fat = (fat_desc_t*)malloc(sizeof(fat_desc_t));
+    fat_desc_t* fat = (fat_desc_t*) malloc(sizeof(fat_desc_t));
     assert(fat);
     memset(fat, 0, sizeof(fat_desc_t));
     
@@ -48,7 +48,7 @@ void print_filesystem_info(fat_desc_t* fat) {
     printf("Label: %.11s\n", fat->bs->volume_label);
     printf("Volume id: 0x%x\n", fat->bs->volume_id);
     printf("OEM data: %.8s\n", fat->bs->oem_data);
-    printf("Sector size: %d\n", fat->sector_size);
+    printf("Sector size: %d\n", (int) fat->sector_size);
     printf("Cluster size (sectors): %d\n", fat->clust_sz);
     printf("Root entries: %d\n", fat->root_entries);
     printf("Number of FATs: %d\n", fat->bs->fat_cnt);
@@ -62,7 +62,7 @@ void print_filesystem_info(fat_desc_t* fat) {
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
-        fprintf(stderr, "Usage: fatinfo <input file>\n");
+        fprintf(stderr, "Usage: fatcat <input file>\n");
         exit(1);
     }
     FILE* in = fopen(argv[1], "rb");

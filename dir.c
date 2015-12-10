@@ -58,11 +58,27 @@ dir_t* init_dir(fat_desc_t* fat, entry_t* entry, dir_t* parent) {
     return dir;
 }
 
+void free_dir(dir_t* dir) {
+    int i;
+    for (i = 0; i < (int) dir->subdir_cnt; i++)
+        free_dir(dir->subdirs[i]);
+    free(dir->subdirs);
+    for (i = 0; i < (int) dir->file_cnt; i++) {
+        free(dir->files[i]->pth);
+        free(dir->files[i]->entry);
+        free(dir->files[i]);
+    }
+    free(dir->files);
+    free(dir->entry);
+    free(dir->pth);
+    free(dir);
+    dir = NULL;
+}
+
 dir_t* process_root(fat_desc_t* fat, int root_cluster) {
     entry_t* root_entry = malloc(sizeof(entry_t));
     assert(root_entry != NULL);
     memset(root_entry, 0, sizeof(entry_t));
-    //memset(root_entry->fname, 0x20, 5);
     memcpy(root_entry->fname, "ROOT", sizeof(char) * 4);
     root_entry->cluster = root_cluster;
     
@@ -77,17 +93,26 @@ dir_t* process_root(fat_desc_t* fat, int root_cluster) {
         assert(cur != NULL);
         memset(cur, 0, sizeof(entry_t));
         fseek(fat->in, root_ptr + i * sizeof(entry_t), SEEK_SET);
-        fread(cur, sizeof(entry_t), 1, fat->in);
+        if (fread(cur, sizeof(entry_t), 1, fat->in) != 1) {
+            fprintf(stderr, "Error: failed to read root dir entry\n");
+            exit(1);
+        }
         
-        if (cur->fname[0] == 0x0) 
+        if (cur->fname[0] == 0x0) {
+            free(cur); 
             break; // empty
-            
+        }
+        
         // extended name or deleted file
-        if (cur->fname[0] == 0xe5 || cur->atr == 0x0f) 
+        if (cur->fname[0] == 0xe5 || cur->atr == 0x0f) {
+            free(cur);
             continue;
+        }
         // . and ..
-        if (cur->fname[0] == '.' && (cur->fname[1] == '.' || !isalpha(cur->fname[1])) && !isalpha(cur->fname[1]))
+        if (cur->fname[0] == '.' && (cur->fname[1] == '.' || !isalpha(cur->fname[1])) && !isalpha(cur->fname[1])) {
+            free(cur);
             continue;
+        }
             
         if (cur->atr & 0x10) { // directory
             dir_t* subdir = init_dir(fat, cur, dir);
@@ -112,17 +137,26 @@ void dir_process(fat_desc_t* fat, dir_t* dir)  {
             assert(cur != NULL);
             memset(cur, 0, sizeof(entry_t));
             fseek(fat->in, cluster_ptr + i * sizeof(entry_t), SEEK_SET);
-            fread(cur, sizeof(entry_t), 1, fat->in);
+            if (fread(cur, sizeof(entry_t), 1, fat->in) != 1) {
+                fprintf(stderr, "Error: failed to read entry\n");
+                exit(1);
+            }
             
-            if (cur->fname[0] == 0x0) 
+            if (cur->fname[0] == 0x0) {
+                free(cur); 
                 break; // empty one
-                
+            }
+            
             // extended name or deleted file
-            if (cur->fname[0] == 0xe5 || cur->atr == 0x0f) 
+            if (cur->fname[0] == 0xe5 || cur->atr == 0x0f) {
+                free(cur);
                 continue;
+            }
                 
-            if (cur->fname[0] == '.' && (cur->fname[1] == '.' || !isalpha(cur->fname[1])) && !isalpha(cur->fname[1]))
+            if (cur->fname[0] == '.' && (cur->fname[1] == '.' || !isalpha(cur->fname[1])) && !isalpha(cur->fname[1])) {
+                free(cur);
                 continue;
+            }
             
             if (cur->atr & 0x10) { // directory
                 dir_t* subdir = init_dir(fat, cur, dir);

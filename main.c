@@ -24,7 +24,10 @@ fat_desc_t* fat_init(FILE* in, unsigned int offset) {
     fseek(in, offset, SEEK_SET);
     bootsector_t* bs = (bootsector_t*) malloc(sizeof(bootsector_t));
     memset(bs, 0, sizeof(bootsector_t));
-    fread(bs, sizeof(bootsector_t), 1, in);
+    if (fread(bs, sizeof(bootsector_t), 1, in) != 1) {
+        fprintf(stderr, "Error: reading bootsector failed\n");
+        exit(1);
+    }
     
     fat->bs = bs;
     
@@ -42,6 +45,11 @@ fat_desc_t* fat_init(FILE* in, unsigned int offset) {
     fat->cluster_offset = fat->rootdir_offset + fat->sectors_for_root;
     
     return fat;
+}
+
+void free_fat(fat_desc_t* fat) {
+    free(fat->bs);
+    free(fat);
 }
 
 void print_filesystem_info(fat_desc_t* fat) {
@@ -66,10 +74,18 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     FILE* in = fopen(argv[1], "rb");
+    if (in == NULL) {
+        fprintf(stderr, "Error: unable to open file (check permissions)\n");
+        exit(1);
+    }
     int i;
     partition_table_t pt[4];
     fseek(in, 0x1BE, SEEK_SET); // go to partition table start
-    fread(pt, sizeof(partition_table_t), 4, in); // read all four entries
+    size_t ret = fread(pt, sizeof(partition_table_t), 4, in); // read 4 entries
+    if (ret != 4) {
+        fprintf(stderr, "Error: failed to read partition table\n");
+        exit(1);
+    }
     for (i = 0; i < 4; i++) {
         printf("Partition %d, type %02X", i, pt[i].partition_type);
         switch (pt[i].partition_type) {
@@ -97,6 +113,8 @@ int main(int argc, char *argv[]) {
         puts("----------------------------\n");
         dir_t* root = process_root(fat, fat->rootdir_offset);
         if (pt[i].partition_type != 0x01) {
+            free_dir(root);
+            free_fat(fat);
             puts("Skipping content (FAT16 is not supported)...\n");
             continue;
         }
@@ -106,6 +124,9 @@ int main(int argc, char *argv[]) {
         for (i = 0; i < (int) root->file_cnt; i++)  
             print_file(root->files[i]);
         puts("<-- END OF FAT FILESYSTEM -->\n");
+        free_dir(root);
+        free_fat(fat);
     }
+    fclose(in);
     return 0;
 }

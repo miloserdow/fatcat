@@ -23,7 +23,10 @@ inline int get_next_cluster(fat_desc_t* fat, int cluster)  {
     int fat_start = get_sector(fat, fat->reserved_sectors);
     uint8_t ptr[3];
     fseek(fat->in, fat_start + 3 * (cluster / 2), SEEK_SET);
-    fread(&ptr, sizeof(uint8_t), 3, fat->in);
+    if (fread(&ptr, sizeof(uint8_t), 3, fat->in) != 3) {
+        fprintf(stderr, "Error: failed to read cluster (0x%x)\n", cluster);
+        exit(1);
+    }
     int res;
     if (cluster & 1)
         res = (ptr[2] << 4) + ((ptr[1] & 0xf0) >> 4); 

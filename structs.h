@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <wchar.h>
+#include <wctype.h>
 
 // Entry
 typedef struct {
@@ -67,11 +69,12 @@ typedef struct {
 
 struct file_t;
 typedef struct file_t file_t;
+typedef struct dir_t dir_t;
 
 struct dir_t  {
-    struct dir_t* parent;
+    dir_t* parent;
     entry_t* entry;
-    struct dir_t** subdirs;
+    dir_t** subdirs;
     file_t** files;
     unsigned int max_subdirs;
     unsigned int max_files;
@@ -83,7 +86,6 @@ struct dir_t  {
     unsigned int byte_size;
     char* pth;
 };
-typedef struct dir_t dir_t;
 
 struct file_t {
     dir_t* dir;
@@ -102,6 +104,7 @@ void add_subdir(dir_t* parent, dir_t* subdir);
 void add_file(dir_t* parent, file_t* file);
 char* dir_pth(dir_t* dir);
 void print_dir(dir_t* dir);
+void free_dir(dir_t* dir);
 
 size_t entry_namelen(entry_t* dir);
 size_t entry_extlen(entry_t* dir);

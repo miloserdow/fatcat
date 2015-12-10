@@ -85,6 +85,7 @@ struct dir_t  {
     unsigned int file_cnt;
     unsigned int byte_size;
     char* pth;
+    char* ext_name;
 };
 
 struct file_t {
@@ -94,6 +95,7 @@ struct file_t {
     unsigned int clust_sz;
     unsigned int byte_size;
     char* pth;
+    char* ext_name;
 };
 
 // ALL the functions involved...
@@ -115,4 +117,5 @@ void print_file(file_t* file);
 inline int get_sector(fat_desc_t* fat, int sector);
 inline int get_cluster_size(fat_desc_t* fat, int start_cluster);
 inline int get_next_cluster(fat_desc_t* fat, int cluster);
+void ucs2utf (char* dst, uint16_t* src);
 #endif // STRUCTS_H

@@ -28,6 +28,12 @@ char* file_path(file_t* file) {
 
 void print_file(file_t* file)  {
     printf("file: %s\n", file->pth + 6); // skip root label
+    if (file->ext_name != NULL) {
+        int i = 0;
+        while (file->ext_name[i] != 0x20 && file->ext_name[i] != 0x0)
+            putwchar((wchar_t) file->ext_name[i]);
+        putchar('\n');
+    }
     printf("size: %u bytes, ", file->byte_size);
     printf("%u clusters\n", file->cluster);
     printf("modify time: %02d-%02d-%02d %02d:%02d:%02d\n\n", file->entry->days + 1,
